@@ -1,0 +1,309 @@
+═══════════════════════════════════════════════════════════════════════════════
+MAXWELL'S DEMON SIMULATION TOOLKIT - FILE GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK START:
+1. Read: README.md (overview)
+2. Run: minimal_example.py (5-10 minutes)
+3. Study: QUICK_REFERENCE.py (common patterns)
+4. Explore: MAXWELL_DEMON_NOTEBOOK.py (complete workflow)
+
+═══════════════════════════════════════════════════════════════════════════════
+FILE ORGANIZATION
+═══════════════════════════════════════════════════════════════════════════════
+
+DOCUMENTATION:
+───────────────
+README.md
+  • Complete overview and setup instructions
+  • Module reference with all classes and methods
+  • Troubleshooting guide
+  • Extension examples
+  START HERE if new to project
+
+FILE_GUIDE.txt
+  • This file
+  • Quick reference to what each file does
+
+PHYSICS_TO_MECHANICS_GUIDE.md
+  • How to translate simulation results to physical implementation
+  • Vibrating table design
+  • Gate mechanism design options
+  • Particle selection and preparation
+  • Validation procedures
+  • Troubleshooting physical model
+  READ BEFORE building physical apparatus
+
+CORE MODULES:
+─────────────
+maxwell_demon_physics_core.py (22 KB)
+  • SimulationEngine class - main physics engine
+  • Particle class - individual particle properties
+  • Collision detection and resolution
+  • Spatial partitioning for efficiency
+  • Energy/momentum conservation
+  ALWAYS imported first
+
+maxwell_demon_thermo_analysis.py (19 KB)
+  • ThermodynamicAnalyzer class
+  • Temperature, entropy, energy computations
+  • Particle separation metrics (KEY FOR DEMON VALIDATION)
+  • Maxwell-Boltzmann comparison
+  • Statistical quality checks
+  IMPORTED for all analysis
+
+maxwell_demon_control.py (18 KB)
+  • MaxwellDemon base class
+  • VelocityThresholdDemon (simplest, START HERE)
+  • HysteresisDemon (stable version)
+  • MeasurementDemon (with energy cost tracking)
+  • DensityDemon (alternative strategy)
+  IMPORTED to run demon experiments
+
+USAGE EXAMPLES:
+───────────────
+minimal_example.py (6.5 KB)
+  • Minimal working example (~50 lines)
+  • Demonstrates entire workflow: equilibrate → demon → measure
+  • Produces visualization
+  • Run this first to verify installation
+  TIME: ~5-10 minutes
+
+QUICK_REFERENCE.py (14 KB)
+  • API documentation with code examples
+  • Common patterns and workflows
+  • Parameter optimization template
+  • Troubleshooting reference
+  USE while developing your own code
+
+MAXWELL_DEMON_NOTEBOOK.py (18 KB)
+  • Complete Jupyter-ready workflow
+  • 6 phases: physics validation, thermo tracking, demon implementation,
+    strategy comparison, optimization, analysis
+  • Produces publication-quality plots
+  • Fully commented and modular
+  CONVERT TO .ipynb or run as Python script
+
+═══════════════════════════════════════════════════════════════════════════════
+WORKFLOW BY USE CASE
+═══════════════════════════════════════════════════════════════════════════════
+
+USE CASE 1: "I want to understand how this works"
+──────────────────────────────────────────────────
+1. Read README.md sections on "Module Reference"
+2. Run minimal_example.py
+3. Read QUICK_REFERENCE.py code examples
+4. Modify minimal_example.py to experiment
+5. Visualize with matplotlib (see MAXWELL_DEMON_NOTEBOOK.py for examples)
+
+Time: 1-2 hours
+
+USE CASE 2: "I want to design the physical apparatus"
+────────────────────────────────────────────────────
+1. Read README.md for overview
+2. Run MAXWELL_DEMON_NOTEBOOK.py to completion
+   - Phase 1-3: Understand baseline and single demon
+   - Phase 4-6: Compare strategies and optimize
+3. Record optimal parameters from simulation
+4. Read PHYSICS_TO_MECHANICS_GUIDE.md
+5. Translate parameters to physical design
+6. Build and validate against simulation
+
+Time: 6-12 hours (simulation) + build/test time
+
+USE CASE 3: "I want to optimize separation efficiency"
+───────────────────────────────────────────────────────
+1. Run minimal_example.py once to verify setup
+2. Use QUICK_REFERENCE.py parameter optimization template
+3. Scan: velocity_threshold, gate_width, gate_position
+4. For each: run simulation, measure separation_by_temperature()
+5. Plot results: ΔT vs parameters
+6. Identify global maximum
+7. Use best parameters for physical build
+
+Code template in QUICK_REFERENCE.py "PARAMETER OPTIMIZATION TEMPLATE"
+
+Time: 2-4 hours (depending on search space size)
+
+USE CASE 4: "I want to validate physical results"
+──────────────────────────────────────────────────
+1. Build physical apparatus following PHYSICS_TO_MECHANICS_GUIDE.md
+2. Run simulation with same parameters (num_particles, dimensions, etc.)
+3. Measure in physical system:
+   - Temperature gradient (ΔT) vs time
+   - Gate duty cycle (openings per minute)
+   - Particle separation rate
+4. Compare to simulation predictions
+5. See PHYSICS_TO_MECHANICS_GUIDE.md "VALIDATION" section
+6. Iterate parameters if not matching
+
+Time: 4-8 hours (physical setup) + ongoing
+
+═══════════════════════════════════════════════════════════════════════════════
+KEY CLASSES & METHODS BY PURPOSE
+═══════════════════════════════════════════════════════════════════════════════
+
+"I want to measure separation (the whole point)":
+───────────────────────────────────────────────
+analyzer = ThermodynamicAnalyzer(sim)
+sep = analyzer.separation_by_temperature()
+  → {'T_left': float, 'T_right': float, 'delta_T': float, ...}
+
+sep = analyzer.separation_by_density()
+  → {'n_left': int, 'n_right': int, 'delta_n': int, ...}
+
+sep = analyzer.separation_by_mass()
+  → {..., 'separation_metric': float, ...}  # For multi-species
+
+"I want to check if simulation is stable":
+───────────────────────────────────────────
+error = analyzer.energy_conservation_error(initial_energy)
+  → float (should be < 0.01 i.e. < 1%)
+
+momentum = sim.compute_total_momentum()
+  → np.array [px, py] (should be ~0 if no external forces)
+
+"I want to run the demon":
+──────────────────────────
+demon = VelocityThresholdDemon(sim, velocity_threshold=0.5)
+for i in range(N_STEPS):
+    gate_open, particles_passed = demon.step()
+    sim.step()
+
+duty_cycle = demon.gate_open_count / demon.step_count
+particles_per = sum(demon.history['particles_passed']) / demon.gate_open_count
+
+"I want to visualize":
+──────────────────────
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Time series
+times = np.array(sim.history['time'])
+plt.plot(times, sim.history['temperature'])
+
+# Positions
+pos = sim.get_particle_positions()
+plt.scatter(pos[:, 0], pos[:, 1])
+
+# Speed distribution
+hist, bins = analyzer.speed_distribution(bins=30, weights=True)
+plt.bar(bins, hist)
+
+═══════════════════════════════════════════════════════════════════════════════
+DEPENDENCY GRAPH
+═══════════════════════════════════════════════════════════════════════════════
+
+maxwell_demon_physics_core.py
+  ↓
+  (needed by all following)
+  ↓
+maxwell_demon_thermo_analysis.py  +  maxwell_demon_control.py
+  ↓                                   ↓
+  (analysis)                    (demon logic)
+  
+All three needed for:
+  - MAXWELL_DEMON_NOTEBOOK.py (complete workflow)
+  - QUICK_REFERENCE.py (API examples)
+  - minimal_example.py (working example)
+
+Recommended import order:
+  1. maxwell_demon_physics_core
+  2. maxwell_demon_control
+  3. maxwell_demon_thermo_analysis
+
+═══════════════════════════════════════════════════════════════════════════════
+CUSTOMIZATION EXAMPLES
+═══════════════════════════════════════════════════════════════════════════════
+
+"I want different particle masses":
+────────────────────────────────────
+sim = SimulationEngine(num_particles=200)
+# Create alternating light/heavy
+for i, p in enumerate(sim.particles):
+    p.mass = 1.0 if i % 2 == 0 else 2.0
+# Simulation now models different molecular species
+sep = analyzer.separation_by_mass()
+
+"I want a custom demon strategy":
+──────────────────────────────────
+from maxwell_demon_control import MaxwellDemon
+
+class MyDemon(MaxwellDemon):
+    def step(self):
+        # Your logic here
+        gate_open = some_condition()
+        particles_passed = self.get_relevant_particles()
+        self.record_state(gate_open, particles_passed)
+        return gate_open, particles_passed
+    
+    def reset(self):
+        pass
+
+demon = MyDemon(sim)
+
+"I want external fields (e.g., gravity)":
+──────────────────────────────────────────
+sim = SimulationEngine(gravity=9.8)  # Gravitational acceleration
+# Or modify _compute_forces() method in your copy of the module
+
+"I want to check particle-specific properties":
+────────────────────────────────────────────────
+for particle in sim.particles:
+    print(f"Pos: {particle.pos}, V: {particle.vel}, KE: {particle.kinetic_energy}")
+    if particle.kinetic_energy > 1.0:
+        print("  → Hot particle!")
+
+═══════════════════════════════════════════════════════════════════════════════
+TYPICAL RUNNING TIME
+═══════════════════════════════════════════════════════════════════════════════
+
+minimal_example.py:
+  - 200 particles, 4000 steps: ~10 seconds
+
+QUICK_REFERENCE.py (single optimization):
+  - 200 particles, 3000 steps: ~8 seconds per run
+  - 10-parameter scan: ~80 seconds
+
+MAXWELL_DEMON_NOTEBOOK.py:
+  - All 6 phases with visualizations: ~3-5 minutes
+  - Produces 4 PNG plots
+
+Physical model (real-world):
+  - Equilibration: 2-3 minutes
+  - With demon: 5-10 minutes for clear separation
+  - Full characterization: 30 minutes - 2 hours
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING QUICK LINKS
+═══════════════════════════════════════════════════════════════════════════════
+
+"Energy increasing/unstable"
+  → README.md "Troubleshooting" section
+  → Reduce dt, reduce num_particles, check restitution
+
+"Demon not creating separation"
+  → QUICK_REFERENCE.py "TROUBLESHOOTING" section
+  → Verify gate is opening, check threshold value
+
+"Physical model doesn't match simulation"
+  → PHYSICS_TO_MECHANICS_GUIDE.md "TROUBLESHOOTING" section
+  → Check gate mechanism, vibration frequency, particle quality
+
+"Parameters? Which ones matter?"
+  → README.md "Tuning parameters" section
+  → QUICK_REFERENCE.py "Parameter Optimization Template"
+
+═══════════════════════════════════════════════════════════════════════════════
+READY TO START?
+═══════════════════════════════════════════════════════════════════════════════
+
+1. pip install numpy matplotlib scipy
+2. python minimal_example.py
+3. When ready: read README.md
+4. Then: explore QUICK_REFERENCE.py
+5. Finally: run MAXWELL_DEMON_NOTEBOOK.py
+
+Questions? See README.md "Questions?" section for debugging methodology.
+
+═══════════════════════════════════════════════════════════════════════════════
