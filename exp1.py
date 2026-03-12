@@ -58,7 +58,7 @@ def create_container(space, width, height):
         wall.elasticity = 0.95
         wall.friction = 0.1
     
-    space.add(walls)
+    space.add(*walls)
 
 def demon_logic(space, partition_x, threshold):
     """Maxwell's Demon logic - sorts particles by energy"""
